@@ -16,7 +16,6 @@ class _BookingTileState extends State<BookingTile> {
   @override
   void initState() {
     super.initState();
-    // Timer setiap 1 detik untuk update status
     timer = Timer.periodic(Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -45,6 +44,7 @@ class _BookingTileState extends State<BookingTile> {
     final endTime = startTime.add(Duration(minutes: durationMinutes));
 
     final isOngoing = now.isAfter(startTime) && now.isBefore(endTime);
+    final isFinished = now.isAfter(endTime);
 
     return ListTile(
       dense: true,
@@ -63,13 +63,21 @@ class _BookingTileState extends State<BookingTile> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isOngoing ? Colors.red.shade100 : Colors.green.shade100,
+              color: isFinished ? Colors.grey.shade300 :isOngoing ? Colors.red.shade100 : Colors.green.shade100,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              isOngoing ? "Ongoing" : "In Queue",
+              isFinished
+                  ? "Finished"
+                  : isOngoing
+                  ? "Ongoing"
+                  : "In Queue",
               style: TextStyle(
-                color: isOngoing ? Colors.red : Colors.green,
+                color: isFinished
+                    ? Colors.grey.shade700
+                    : isOngoing
+                    ? Colors.red
+                    : Colors.green,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
