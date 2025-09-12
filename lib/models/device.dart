@@ -71,7 +71,7 @@ class Device {
 
   factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
-      id: json['id'],
+      id: json['id'].toString(),
       deviceName: json['device_name'] ?? '',
       roomName: json['room_name'] ?? 'Unknown Room',
       location: json['location'] ?? '',

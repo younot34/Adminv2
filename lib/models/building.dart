@@ -33,7 +33,7 @@ class Building {
 
   factory Building.fromJson(Map<String, dynamic> json) {
     return Building(
-      id: json['id'],
+      id: json['id'].toString(),
       name: json['name'],
       address: json['address'],
     );

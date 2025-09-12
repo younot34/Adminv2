@@ -152,7 +152,7 @@ class Booking {
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
-      id: json['id'],
+      id: json['id'].toString(),
       roomName: json['room_name'],
       date: json['date'],
       time: json['time'],

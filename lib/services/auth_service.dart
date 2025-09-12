@@ -4,6 +4,9 @@ import '../config/api_config.dart';
 
 class AuthService {
   static Future<String?> login(String email, String password) async {
+    if (email != "admin@gmail.com") {
+      return null; // langsung gagal tanpa request ke backend
+    }
     final response = await http.post(
       Uri.parse("${ApiConfig.baseUrl}/login"),
       headers: ApiConfig.headers,
