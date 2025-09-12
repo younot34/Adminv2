@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class UserService {
-  final String baseUrl = "http://192.168.0.102:8000/api/users"; // emulator
+  final String baseUrl = "http://10.21.161.65:8000/api/users"; // emulator
   // ganti dengan IP lokal kalau pakai device nyata
 
   Future<List<Map<String, dynamic>>> getUsers() async {
