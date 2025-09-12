@@ -10,7 +10,6 @@ class InstalledDevicePage extends StatefulWidget {
 }
 
 class _InstalledDevicePageState extends State<InstalledDevicePage> {
-  final DeviceFirestoreService deviceService = DeviceFirestoreService();
   List<Device> devices = [];
 
   @override
@@ -20,7 +19,7 @@ class _InstalledDevicePageState extends State<InstalledDevicePage> {
   }
 
   Future<void> loadDevices() async {
-    final loadedDevices = await deviceService.getDevices();
+    final loadedDevices = await DeviceService().getDevices();
     setState(() {
       devices = loadedDevices;
     });
@@ -37,7 +36,7 @@ class _InstalledDevicePageState extends State<InstalledDevicePage> {
           children: [
             Text("Room: ${device.roomName}"),
             Text("Location: ${device.location}"),
-            Text("Installed: ${device.installDate.toIso8601String().split('T')[0]}"),
+            Text("Installed: ${device.installDate?.toIso8601String().split('T')[0]}"),
             Text("Capacity: ${device.capacity}"),
             Text("Equipment: ${device.equipment.join(', ')}"),
           ],

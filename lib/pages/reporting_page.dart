@@ -11,7 +11,6 @@ class ReportingPage extends StatefulWidget {
 }
 
 class _ReportingPageState extends State<ReportingPage> {
-  final DeviceFirestoreService deviceService = DeviceFirestoreService();
   List<Device> devices = [];
   List<String> allRooms = [];
 
@@ -22,7 +21,7 @@ class _ReportingPageState extends State<ReportingPage> {
   }
 
   Future<void> loadDevices() async {
-    final devices = await deviceService.getDevices();
+    final devices = await DeviceService().getDevices();
     devices.sort((a, b) {
       final regex = RegExp(r'(\d+)');
       final na = int.tryParse(regex.firstMatch(a.roomName)?.group(0) ?? "0") ?? 0;

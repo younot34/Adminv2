@@ -18,7 +18,6 @@ class _DashboardPageState extends State<DashboardPage> {
   String selectedMenu = "Reporting";
   String? selectedRoom;
   DateTime? selectedDate;
-  final DeviceFirestoreService deviceService = DeviceFirestoreService();
   final BookingService bookingService = BookingService();
 
   @override
@@ -79,7 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 // room filter
                 StreamBuilder<List<Device>>(
-                  stream: deviceService.getDevicesStream(),
+                  stream: DeviceService().getDevicesStream(),
                   builder: (context, snapshot) {
                     var devices = snapshot.data ?? [];
                     devices.sort((a, b) {
@@ -151,7 +150,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // dashboard content
         Expanded(
           child: StreamBuilder<List<Device>>(
-            stream: deviceService.getDevicesStream(),
+            stream: DeviceService().getDevicesStream(),
             builder: (context, deviceSnapshot) {
               var devices = deviceSnapshot.data ?? [];
               devices.sort((a, b) {

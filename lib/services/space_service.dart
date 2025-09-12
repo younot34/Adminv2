@@ -1,37 +1,56 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../models/space.dart';
 
 class SpaceService {
-  final CollectionReference spacesCollection =
-  FirebaseFirestore.instance.collection('spaces');
+  final String url = "${ApiConfig.baseUrl}/spaces";
 
-  /// Ambil semua space
   Future<List<Space>> getSpaces() async {
-    final snapshot = await spacesCollection.get();
-    return snapshot.docs.map((doc) => Space.fromFirestore(doc)).toList();
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Space.fromJson(e)).toList();
+    }
+    throw Exception("Failed to fetch spaces");
   }
 
-  /// Buat space baru
-  Future<void> createSpace(Space space) async {
-    await spacesCollection.add(space.toMap());
+  Future<List<Space>> getSpacesByBuilding(int buildingId) async {
+    final response = await http.get(Uri.parse("$url?building_id=$buildingId"));
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Space.fromJson(e)).toList();
+    }
+    throw Exception("Failed to fetch spaces by building");
   }
 
-  /// Update space existing
+  Future<Space> createSpace(Space space) async {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: ApiConfig.headers,
+      body: jsonEncode(space.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return Space.fromJson(jsonDecode(response.body));
+    }
+    throw Exception("Failed to create space");
+  }
+
   Future<void> updateSpace(Space space) async {
-    if (space.id.isEmpty) return;
-    await spacesCollection.doc(space.id).update(space.toMap());
+    final response = await http.put(
+      Uri.parse("$url/${space.id}"),
+      headers: ApiConfig.headers,
+      body: jsonEncode(space.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception("Failed to update space");
+    }
   }
 
-  /// Hapus space
   Future<void> deleteSpace(String id) async {
-    await spacesCollection.doc(id).delete();
-  }
-
-  /// Ambil space berdasarkan Building ID
-  Future<List<Space>> getSpacesByBuilding(String buildingId) async {
-    final snapshot = await spacesCollection
-        .where('buildingId', isEqualTo: buildingId)
-        .get();
-    return snapshot.docs.map((doc) => Space.fromFirestore(doc)).toList();
+    final response = await http.delete(Uri.parse("$url/$id"));
+    if (response.statusCode != 204) {
+      throw Exception("Failed to delete space");
+    }
   }
 }

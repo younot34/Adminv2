@@ -1,23 +1,30 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class AuthService {
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
+  static Future<String?> login(String email, String password) async {
+    final response = await http.post(
+      Uri.parse("${ApiConfig.baseUrl}/login"),
+      headers: ApiConfig.headers,
+      body: jsonEncode({"email": email, "password": password}),
+    );
 
-  static Future<User?> login(String email, String password) async {
-    try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return userCredential.user;
-    } catch (e) {
-      print("Login error: $e");
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["token"]; // simpan token JWT / Sanctum
+    } else {
       return null;
     }
   }
 
-  static Future<void> logout() async {
-    await _auth.signOut();
+  static Future<void> logout(String token) async {
+    await http.post(
+      Uri.parse("${ApiConfig.baseUrl}/logout"),
+      headers: {
+        ...ApiConfig.headers,
+        "Authorization": "Bearer $token",
+      },
+    );
   }
-  static User? get currentUser => _auth.currentUser;
 }

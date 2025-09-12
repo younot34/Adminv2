@@ -48,7 +48,7 @@ class BookingConfirmationPage extends StatelessWidget {
       },
     );
     try {
-      await BookingService().saveBooking(booking);
+      await BookingService().createBooking(booking);
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("successfully")),

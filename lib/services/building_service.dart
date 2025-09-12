@@ -1,29 +1,49 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
+import '../models/booking.dart';
 import '../models/building.dart';
 
 class BuildingService {
-  final CollectionReference _collection =
-  FirebaseFirestore.instance.collection("buildings");
+  final String url = "${ApiConfig.baseUrl}/buildings";
 
-  // CREATE
-  Future<Building> addBuilding(String name, String address) async {
-    final docRef = await _collection.add({"name": name, "address": address});
-    return Building(id: docRef.id, name: name, address: address);
-  }
-
-  // READ
   Future<List<Building>> getAllBuildings() async {
-    final snapshot = await _collection.get();
-    return snapshot.docs.map((doc) => Building.fromFirestore(doc)).toList();
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Building.fromJson(e)).toList();
+    }
+    throw Exception("Failed to fetch buildings");
   }
 
-  // UPDATE
-  Future<void> updateBuilding(Building building) async {
-    await _collection.doc(building.id).update(building.toMap());
+  Future<Building> create(Building building) async {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(building.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return Building.fromJson(jsonDecode(response.body));
+    }
+    throw Exception("Failed to create building");
   }
 
-  // DELETE
-  Future<void> deleteBuilding(String id) async {
-    await _collection.doc(id).delete();
+  Future<void> update(Building building) async {
+    final response = await http.put(
+      Uri.parse("$url/${building.id}"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(building.toJson()),
+    );
+    if (response.statusCode != 200) {
+      throw Exception("Failed to update building");
+    }
   }
+
+  Future<void> delete(String id) async {
+    final response = await http.delete(Uri.parse("$url/$id"));
+    if (response.statusCode != 204) {
+      throw Exception("Failed to delete building");
+    }
+  }
+
 }

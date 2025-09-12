@@ -6,6 +6,7 @@ import '../pages/installedDevice_page.dart';
 import '../pages/mediaLibrary_page.dart';
 import '../pages/reporting_page.dart';
 import '../pages/space_resource.dart';
+import '../pages/userPage.dart';
 
 class Sidebar extends StatelessWidget {
   final Function(String) onSelectMenu;
@@ -56,6 +57,7 @@ class Sidebar extends StatelessWidget {
                 _menuButton(context, "Device", Icons.devices),
                 _menuButton(context, "Media Library", Icons.perm_media),
                 _menuButton(context, "Booking", Icons.library_books_outlined),
+                _menuButton(context, "User", Icons.person),
                 // _menuButton(context, "History", Icons.schedule),
               ],
             ),
@@ -109,6 +111,12 @@ class Sidebar extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ReportingPage()),
+            );
+            break;
+          case "User":
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UserPage()),
             );
             break;
           case "History":

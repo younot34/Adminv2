@@ -718,8 +718,8 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
             date:
             "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
             time: "$selectedHour:$selectedMinute",
-            duration: selectedDuration,
-            numberOfPeople: numberOfPeople,
+            duration: selectedDuration!,
+            numberOfPeople: numberOfPeople!,
             equipment: selectedEquipment,
             hostName: userName ?? "",
             meetingTitle: editableTitle,

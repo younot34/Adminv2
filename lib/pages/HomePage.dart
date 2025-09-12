@@ -32,7 +32,6 @@ class _HomePageState extends State<HomePage> {
   Timer? _tapResetTimer;
   final BookingService bookingService = BookingService();
   String deviceLocation = "Loading...";
-  final DeviceFirestoreService deviceService = DeviceFirestoreService();
   Map<String, String> roomLocations = {};
 
   Route<T> _noAnimationRoute<T>(Widget page) {
@@ -124,7 +123,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchDeviceLocation() async {
-    final location = await deviceService.getLocation(widget.roomName);
+    final location = await DeviceService().getLocation(widget.roomName);
     setState(() {
       deviceLocation = location;
     });
@@ -149,7 +148,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         final index = bookings.indexWhere((b) => b.id == updated.id);
         if (index != -1) {
-          bookings[index] = updated; // replace booking lama
+          bookings[index] = updated;
         }
       });
       Fluttertoast.showToast(msg: "Booking updated");
@@ -269,7 +268,7 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (result != null) {
-      final saved = await bookingService.saveBooking(result);
+      final saved = await BookingService().saveBooking(result);
       setState(() {
         bookings.add(saved);
         isScanEnabled = saved.isScanEnabled;

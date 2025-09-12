@@ -14,7 +14,6 @@ class DevicePage extends StatefulWidget {
 }
 
 class _DevicePageState extends State<DevicePage> {
-  final DeviceFirestoreService deviceService = DeviceFirestoreService();
   final SpaceService spaceService = SpaceService();
   final BuildingService buildingService = BuildingService();
 
@@ -33,7 +32,7 @@ class _DevicePageState extends State<DevicePage> {
   }
 
   Future<void> loadData() async {
-    final loadedDevices = await deviceService.getDevices();
+    final loadedDevices = await DeviceService().getDevices();
     final loadedSpaces = await spaceService.getSpaces();
     final loadedBuildings = await buildingService.getAllBuildings();
     loadedDevices.sort((a, b) {
@@ -61,9 +60,8 @@ class _DevicePageState extends State<DevicePage> {
     String? selectedLocation =
     device?.location?.isNotEmpty == true ? device!.location : null;
     final installDateController = TextEditingController(
-        text: device?.installDate != null
-            ? device!.installDate.toIso8601String().split("T")[0]
-            : '');
+        text: device?.installDate?.toIso8601String().split("T")[0] ?? ''
+    );
 
     final locationItems = spaces.map((s) {
       final building = buildings.firstWhere(
@@ -185,9 +183,9 @@ class _DevicePageState extends State<DevicePage> {
                   );
 
                   if (device == null) {
-                    await deviceService.createDevice(newDevice);
+                    await DeviceService().createDevice(newDevice);
                   } else {
-                    await deviceService.updateDevice(newDevice);
+                    await DeviceService().updateDevice(newDevice);
                   }
 
                   Navigator.pop(context);
@@ -275,14 +273,14 @@ class _DevicePageState extends State<DevicePage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          device.installDate.year < 2001
+                          device.installDate != null && device.installDate!.year > 2000
                               ? "Installed: Belum diisi"
-                              : device.installDate.toIso8601String().split("T")[0],
+                              : "Installed: ${device.installDate!.toIso8601String().split("T")[0]}",
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],
                     ),
-                    Text(device.capacity > 0
+                    Text(device.capacity! > 0
                         ? "👥 Capacity: ${device.capacity}"
                         : "👥 Capacity: Belum diisi"),
                     const SizedBox(height: 6),
@@ -321,7 +319,7 @@ class _DevicePageState extends State<DevicePage> {
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.redAccent),
                     onPressed: () async {
-                      await deviceService.deleteDevice(device.id);
+                      await DeviceService().deleteDevice(device.id);
                       loadData();
                     },
                   ),

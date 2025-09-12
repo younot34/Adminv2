@@ -34,7 +34,12 @@ class _BuildingPageState extends State<BuildingPage> {
 
     if (editingBuilding == null) {
       // mode tambah
-      await _service.addBuilding(name, address);
+      final newBuilding = Building(
+        id: '',
+        name: name,
+        address: address,
+      );
+      await _service.create(newBuilding);
     } else {
       // mode edit
       final updated = Building(
@@ -42,7 +47,7 @@ class _BuildingPageState extends State<BuildingPage> {
         name: name,
         address: address,
       );
-      await _service.updateBuilding(updated);
+      await _service.update(updated);
       editingBuilding = null; // reset mode edit
     }
 
@@ -52,7 +57,7 @@ class _BuildingPageState extends State<BuildingPage> {
   }
 
   void _deleteBuilding(String id) async {
-    await _service.deleteBuilding(id);
+    await _service.delete(id);
     _loadBuildings();
   }
 

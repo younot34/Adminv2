@@ -48,6 +48,7 @@ dependencies:
   permission_handler: ^12.0.1
   rxdart: ^0.28.0
   auto_size_text: ^3.0.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
