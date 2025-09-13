@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/booking.dart';
+import '../models/device.dart';
+import '../services/device_service.dart';
 import 'BookingConfirmationPage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class RoomDetailPage extends StatefulWidget {
@@ -212,17 +213,30 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
     return available;
   }
   Future<void> _loadDeviceData() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('devices')
-        .where('roomName', isEqualTo: widget.roomName)
-        .limit(1)
-        .get();
+    try {
+      final devices = await DeviceService().getDevices();
+      final device = devices.firstWhere(
+            (d) => d.roomName == widget.roomName,
+        orElse: () => Device(
+          id: "",
+          deviceName: "",
+          roomName: widget.roomName,
+          location: "Unknown",
+          installDate: null,
+          capacity: 0,
+          equipment: [],
+          isOn: false,
+        ),
+      );
 
-    if (snapshot.docs.isNotEmpty) {
-      final data = snapshot.docs.first.data();
       setState(() {
-        capacity = data['capacity'];
-        equipment = List<String>.from(data['equipment'] ?? []);
+        capacity = device.capacity ?? 0;
+        equipment = device.equipment;
+      });
+    } catch (e) {
+      setState(() {
+        capacity = 0;
+        equipment = [];
       });
     }
   }

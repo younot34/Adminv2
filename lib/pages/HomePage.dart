@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../models/booking.dart';
@@ -82,17 +81,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchDeviceLocationByRoom(String roomName) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('devices')
-        .where('roomName', isEqualTo: roomName)
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isNotEmpty) {
-      final data = snapshot.docs.first.data();
-      final location = data['location'] as String?;
+    try {
+      final location = await DeviceService().getLocation(roomName);
       setState(() {
-        deviceLocation = location ?? 'Unknown';
+        deviceLocation = location;
         // update lokasi di semua booking yang sesuai
         for (var b in bookings) {
           if (b.roomName == roomName) {
@@ -100,7 +92,7 @@ class _HomePageState extends State<HomePage> {
           }
         }
       });
-    } else {
+    } catch (e) {
       setState(() {
         deviceLocation = 'Unknown';
       });
