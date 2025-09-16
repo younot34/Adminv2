@@ -46,8 +46,8 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
   List<String> hours = [];
   List<String> minutes = [];
   int? numberOfPeople;
-  int? capacity; // kapasitas dari device
-  List<String> equipment = []; // override list statis
+  int? capacity;
+  List<String> equipment = [];
   final Map<String, IconData> equipmentIcons = {
     "Meja": Icons.table_bar,
     "Kursi": Icons.chair,

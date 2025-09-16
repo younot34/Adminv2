@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../config/api_config.dart';
+
 class UserService {
-  final String baseUrl = "http://10.21.161.65:8000/api/users"; // emulator
+  final String url = "${ApiConfig.baseUrl}/users";
   // ganti dengan IP lokal kalau pakai device nyata
 
   Future<List<Map<String, dynamic>>> getUsers() async {
-    final response = await http.get(Uri.parse(baseUrl), headers: {
+    final response = await http.get(Uri.parse(url), headers: {
       'Accept': 'application/json',
     });
     if (response.statusCode == 200) {
@@ -17,7 +19,7 @@ class UserService {
 
   Future<void> createUser(String name, String email, String password) async {
     final response = await http.post(
-      Uri.parse("$baseUrl/users"),
+      Uri.parse("${ApiConfig.baseUrl}/users"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "name": name,
