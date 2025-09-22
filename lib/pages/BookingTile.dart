@@ -20,6 +20,30 @@ class _BookingTileState extends State<BookingTile> {
       if (mounted) setState(() {});
     });
   }
+  DateTime? parseBookingDate(String dateStr) {
+    try {
+      if (dateStr.contains("T")) {
+        return DateTime.parse(dateStr).toLocal();
+      }
+
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateStr)) {
+        return DateTime.parse(dateStr).toLocal();
+      }
+
+      final parts = dateStr.split('/');
+      if (parts.length == 3) {
+        final day = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final year = int.parse(parts[2]);
+        return DateTime(year, month, day);
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint("ERROR parseBookingDate: $dateStr ($e)");
+      return null;
+    }
+  }
 
   @override
   void dispose() {
@@ -30,15 +54,24 @@ class _BookingTileState extends State<BookingTile> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final dateParts = widget.booking.date.split("/");
-    final day = int.parse(dateParts[0]);
-    final month = int.parse(dateParts[1]);
-    final year = int.parse(dateParts[2]);
+
+    final bookingDate = parseBookingDate(widget.booking.date);
+    if (bookingDate == null) {
+      return ListTile(
+        title: Text("Invalid date: ${widget.booking.date}"),
+      );
+    }
 
     final startTimeParts = widget.booking.time.split(":");
     final startHour = int.parse(startTimeParts[0]);
     final startMinute = int.parse(startTimeParts[1]);
-    final startTime = DateTime(year, month, day, startHour, startMinute);
+    final startTime = DateTime(
+      bookingDate.year,
+      bookingDate.month,
+      bookingDate.day,
+      startHour,
+      startMinute,
+    );
 
     final durationMinutes = int.tryParse(widget.booking.duration ?? "0") ?? 0;
     final endTime = startTime.add(Duration(minutes: durationMinutes));

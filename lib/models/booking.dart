@@ -11,7 +11,7 @@ class Booking {
   final bool isScanEnabled;
   final String? scanInfo;
   final String? status;
-  late final String? location;
+  String? location;
 
   Booking({
     required this.id,
@@ -25,7 +25,7 @@ class Booking {
     required this.meetingTitle,
     required this.isScanEnabled,
     this.scanInfo,
-    this.status,
+    this.status = "In Queue",
     this.location,
   });
 

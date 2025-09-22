@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 import '../models/booking.dart';
 import '../models/device.dart';
 import '../services/device_service.dart';
@@ -152,20 +153,29 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
       int.parse(m),
     );
     final checkEnd = checkTime.add(Duration(minutes: selectedDur));
+
     if (checkTime.isBefore(DateTime.now())) return false;
+
     const minBufferMinutes = 30;
+
     if (widget.existingBookings != null) {
       for (var b in widget.existingBookings!) {
-        if (b.date == "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}") {
+        // Parsing string dari MySQL (yyyy-MM-dd)
+        final bookedDate = DateTime.parse(b.date);
+        if (bookedDate.year == selectedDate.year &&
+            bookedDate.month == selectedDate.month &&
+            bookedDate.day == selectedDate.day) {
           final bookedParts = b.time.split(':');
           final bookedHour = int.parse(bookedParts[0]);
           final bookedMinute = int.parse(bookedParts[1]);
           final bookedDur = int.tryParse(b.duration ?? '30') ?? 30;
-          final bookedStart = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, bookedHour, bookedMinute);
+          final bookedStart = DateTime(
+              selectedDate.year, selectedDate.month, selectedDate.day, bookedHour, bookedMinute);
           final bookedEnd = bookedStart.add(Duration(minutes: bookedDur));
-          // buffer sebelum & sesudah booking
+
           final bufferStart = bookedStart.subtract(const Duration(minutes: minBufferMinutes));
           final bufferEnd = bookedEnd.add(const Duration(minutes: minBufferMinutes));
+
           if (checkTime.isBefore(bufferEnd) && checkEnd.isAfter(bufferStart)) {
             return false;
           }
@@ -177,28 +187,41 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
   List<String> getAvailableTimes(DateTime date) {
     final now = DateTime.now();
     List<String> available = [];
+
+    if (times.isEmpty) return available;
+
+    const minBufferMinutes = 30;
+
     for (var t in times) {
       final parts = t.split(':');
       final hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
       final checkTime = DateTime(date.year, date.month, date.day, hour, minute);
+
       if (checkTime.isBefore(now)) continue;
+
       bool conflict = false;
+
       if (widget.existingBookings != null) {
         for (var b in widget.existingBookings!) {
-          if (b.date == "${date.day}/${date.month}/${date.year}") {
+          final bookedDate = DateTime.parse(b.date);
+          if (bookedDate.year == date.year &&
+              bookedDate.month == date.month &&
+              bookedDate.day == date.day) {
+
             final bookedParts = b.time.split(':');
             final bookedHour = int.parse(bookedParts[0]);
             final bookedMinute = int.parse(bookedParts[1]);
-            final duration = int.tryParse(b.duration ?? '30') ?? 30;
+            final bookedDur = int.tryParse(b.duration ?? '30') ?? 30;
             final bookedStart = DateTime(date.year, date.month, date.day, bookedHour, bookedMinute);
-            final bookedEnd = bookedStart.add(Duration(minutes: duration));
+            final bookedEnd = bookedStart.add(Duration(minutes: bookedDur));
 
-            // buffer sebelum & sesudah booking
-            final bufferStart = bookedStart.subtract(const Duration(minutes: 30));
-            final bufferEnd = bookedEnd.add(const Duration(minutes: 30));
+            final bufferStart = bookedStart.subtract(const Duration(minutes: minBufferMinutes));
+            final bufferEnd = bookedEnd.add(const Duration(minutes: minBufferMinutes));
 
-            if (checkTime.isAfter(bufferStart) && checkTime.isBefore(bufferEnd)) {
+            final checkEnd = checkTime.add(const Duration(minutes: 30));
+
+            if (checkTime.isBefore(bufferEnd) && checkEnd.isAfter(bufferStart)) {
               conflict = true;
               break;
             }
@@ -210,6 +233,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
         available.add(t);
       }
     }
+
     return available;
   }
   Future<void> _loadDeviceData() async {
@@ -386,6 +410,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
   double timesDurationSpacing = 18;
   Widget buildTimesAndDuration() {
     List<int> availableDurations = durations;
+    // Handle Meet Now dan nearest booking
     if (widget.isMeetNow && widget.meetNowDate != null && widget.existingBookings != null) {
       final now = widget.meetNowDate!;
       DateTime? nearestBooking;
@@ -405,8 +430,11 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
         availableDurations = durations.where((d) => d <= diffMinutes).toList();
       }
     }
+
     final hours = List.generate(24, (i) => i.toString().padLeft(2, '0'));
     final minutes = List.generate(60, (i) => i.toString().padLeft(2, '0'));
+
+    // Filter durasi berdasarkan waktu yang dipilih
     if (selectedHour != null && selectedMinute != null) {
       final checkTime = DateTime(
         selectedDate.year,
@@ -418,10 +446,13 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
 
       availableDurations = durations.where((d) {
         final checkEnd = checkTime.add(Duration(minutes: d));
-
         if (widget.existingBookings != null) {
           for (var b in widget.existingBookings!) {
-            if (b.date == "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}") {
+            final bookedDate = DateTime.parse(b.date);
+            if (bookedDate.year == selectedDate.year &&
+                bookedDate.month == selectedDate.month &&
+                bookedDate.day == selectedDate.day) {
+
               final bookedParts = b.time.split(':');
               final bookedHour = int.parse(bookedParts[0]);
               final bookedMinute = int.parse(bookedParts[1]);
@@ -429,8 +460,8 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
               final bookedStart = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, bookedHour, bookedMinute);
               final bookedEnd = bookedStart.add(Duration(minutes: bookedDur));
 
-              final bufferStart = bookedStart.subtract(const Duration(minutes: 30));
-              final bufferEnd = bookedEnd.add(const Duration(minutes: 30));
+              final bufferStart = bookedStart.subtract(Duration(minutes: 30));
+              final bufferEnd = bookedEnd.add(Duration(minutes: 30));
 
               if (checkTime.isBefore(bufferEnd) && checkEnd.isAfter(bufferStart)) {
                 return false;
@@ -441,8 +472,10 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
         return true;
       }).toList();
     }
+
     return Column(
       children: [
+        // Dropdown Jam & Menit
         buildCard(
           title: "Select Time",
           child: widget.isMeetNow
@@ -507,6 +540,8 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
           ),
         ),
         const SizedBox(height: 25),
+
+        // Pilih Durasi
         if (selectedTime != null || widget.isMeetNow) ...[
           buildCard(
             title: "Select Duration (minutes)",
@@ -729,8 +764,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
           final booking = Booking(
             id: widget.bookingToEdit?.id ?? "", // kalau edit, pakai id lama
             roomName: widget.roomName,
-            date:
-            "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
+            date: DateFormat('yyyy-MM-dd').format(selectedDate),
             time: "$selectedHour:$selectedMinute",
             duration: selectedDuration!,
             numberOfPeople: numberOfPeople!,

@@ -17,7 +17,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool isScanEnabled = false;
   bool isAvailable = true;
   late Timer _timer;
@@ -46,13 +46,11 @@ class _HomePageState extends State<HomePage> {
       final parts = b.time.split(':');
       final hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
-      final start = DateTime(
-        int.parse(b.date.split('/')[2]),
-        int.parse(b.date.split('/')[1]),
-        int.parse(b.date.split('/')[0]),
-        hour,
-        minute,
-      );
+
+      // Gunakan DateTime.parse karena format "2025-09-21" valid ISO
+      final baseDate = DateTime.parse(b.date);
+      final start = DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute);
+
       final diff = start.difference(_currentTime).inMinutes;
       if (diff > 0 && diff < 35) {
         return false;
@@ -86,6 +84,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         deviceLocation = location;
         // update lokasi di semua booking yang sesuai
+        roomLocations[roomName] = location;
         for (var b in bookings) {
           if (b.roomName == roomName) {
             b.location = deviceLocation;
@@ -161,10 +160,11 @@ class _HomePageState extends State<HomePage> {
     final parts = startTime.split(':');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
+    final baseDate = DateTime.parse(date);
     final start = DateTime(
-      int.parse(date.split('/')[2]),
-      int.parse(date.split('/')[1]),
-      int.parse(date.split('/')[0]),
+      baseDate.year,
+      baseDate.month,
+      baseDate.day,
       hour,
       minute,
     );
@@ -181,15 +181,21 @@ class _HomePageState extends State<HomePage> {
       final parts = b.time.split(':');
       final hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
+
+      // pakai DateTime.parse biar aman
+      final date = DateTime.parse(b.date);
+
       final start = DateTime(
-        int.parse(b.date.split('/')[2]),
-        int.parse(b.date.split('/')[1]),
-        int.parse(b.date.split('/')[0]),
+        date.year,
+        date.month,
+        date.day,
         hour,
         minute,
       );
+
       final dur = int.tryParse(b.duration ?? '30') ?? 30;
       final end = start.add(Duration(minutes: dur));
+
       if (_currentTime.isAfter(start) && _currentTime.isBefore(end)) {
         isAvailable = false;
         break;
@@ -202,10 +208,11 @@ class _HomePageState extends State<HomePage> {
 
     for (var b in List<Booking>.from(bookings)) { // copy biar aman saat remove
       final parts = b.time.split(':');
+      final baseDate = DateTime.parse(b.date);
       final start = DateTime(
-        int.parse(b.date.split('/')[2]),
-        int.parse(b.date.split('/')[1]),
-        int.parse(b.date.split('/')[0]),
+        baseDate.year,
+        baseDate.month,
+        baseDate.day,
         int.parse(parts[0]),
         int.parse(parts[1]),
       );
@@ -213,9 +220,17 @@ class _HomePageState extends State<HomePage> {
       final end = start.add(Duration(minutes: dur));
 
       if (now.isAfter(end)) {
-        setState(() {
-          bookings.remove(b);
-        });
+        try {
+          await bookingService.endBooking(int.parse(b.id));
+          setState(() {
+            bookings.remove(b);
+          });
+          Fluttertoast.showToast(
+            msg: "Booking '${b.meetingTitle}' selesai dan dipindahkan ke history",
+          );
+        } catch (e) {
+          print("Gagal memindahkan booking ${b.id} ke history: $e");
+        }
       }
     }
   }
@@ -297,6 +312,7 @@ class _HomePageState extends State<HomePage> {
   }
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer.cancel();
     _bookingSubscription.cancel();
     super.dispose();
@@ -366,17 +382,22 @@ class _HomePageState extends State<HomePage> {
 
     final sortedKeys = grouped.keys.toList()
       ..sort((a, b) {
-        final da = DateFormat("dd/MM/yyyy").parse(a);
-        final db = DateFormat("dd/MM/yyyy").parse(b);
+        final da = DateTime.parse(a);
+        final db = DateTime.parse(b);
         return da.compareTo(db);
       });
 
     for (var key in grouped.keys) {
       grouped[key]!.sort((a, b) {
-        final aDate = DateFormat("dd/MM/yyyy HH:mm")
-            .parse("${a.date} ${a.time}");
-        final bDate = DateFormat("dd/MM/yyyy HH:mm")
-            .parse("${b.date} ${b.time}");
+        final baseA = DateTime.parse(a.date);
+        final baseB = DateTime.parse(b.date);
+
+        final aDate = DateTime(baseA.year, baseA.month, baseA.day,
+            int.parse(b.time.split(':')[0]),
+            int.parse(b.time.split(':')[1]));
+        final bDate = DateTime(baseB.year, baseB.month, baseB.day,
+            int.parse(b.time.split(':')[0]),
+            int.parse(b.time.split(':')[1]));
         return aDate.compareTo(bDate);
       });
     }
@@ -394,8 +415,8 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                DateFormat("EEEE, dd MMM yyyy")
-                    .format(DateFormat("dd/MM/yyyy").parse(dateKey)),
+                  DateFormat("EEEE, dd MMM yyyy")
+                      .format(DateTime.parse(dateKey)),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

@@ -23,11 +23,33 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {});
+  }
+  bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+  DateTime? parseBookingDate(String dateStr) {
+    try {
+      if (dateStr.contains("T")) {
+        return DateTime.parse(dateStr).toLocal();
       }
-    });
+
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateStr)) {
+        return DateTime.parse(dateStr).toLocal();
+      }
+
+      final parts = dateStr.split('/');
+      if (parts.length == 3) {
+        final day = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final year = int.parse(parts[2]);
+        return DateTime(year, month, day);
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint("ERROR parseBookingDate: $dateStr ($e)");
+      return null;
+    }
   }
 
   void _onSelectMenu(String menu) {
@@ -77,8 +99,8 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // room filter
-                StreamBuilder<List<Device>>(
-                  stream: DeviceService().getDevicesStream(),
+                FutureBuilder<List<Device>>(
+                  future: DeviceService().getDevices(),
                   builder: (context, snapshot) {
                     var devices = snapshot.data ?? [];
                     devices.sort((a, b) {
@@ -149,8 +171,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
         // dashboard content
         Expanded(
-          child: StreamBuilder<List<Device>>(
-            stream: DeviceService().getDevicesStream(),
+          child: FutureBuilder<List<Device>>(
+            future: DeviceService().getDevices(),
             builder: (context, deviceSnapshot) {
               var devices = deviceSnapshot.data ?? [];
               devices.sort((a, b) {
@@ -168,8 +190,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              return StreamBuilder<Map<String, List<Booking>>>(
-                stream: _bookingsByDeviceStream(devices),
+              return FutureBuilder<Map<String, List<Booking>>>(
+                future: _bookingsByDeviceFuture(devices),
                 builder: (context, bookingSnapshot) {
                   final bookingsByRoom = bookingSnapshot.data ?? {};
                   return ListView(
@@ -186,14 +208,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       // filter date
                       final filteredBookings = bookings.where((b) {
                         if (selectedDate == null) return true;
-                        final dateParts = b.date.split("/");
-                        final day = int.parse(dateParts[0]);
-                        final month = int.parse(dateParts[1]);
-                        final year = int.parse(dateParts[2]);
-                        final bookingDate = DateTime(year, month, day);
-                        return bookingDate.year == selectedDate!.year &&
-                            bookingDate.month == selectedDate!.month &&
-                            bookingDate.day == selectedDate!.day;
+
+                        final bookingDate = parseBookingDate(b.date);
+                        debugPrint("CHECK => raw=${b.date}, parsed=$bookingDate, selected=$selectedDate");
+
+                        return bookingDate != null && isSameDay(bookingDate, selectedDate!);
                       }).toList();
 
                       return Card(
@@ -256,21 +275,12 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // Stream gabungan semua booking per device
-  Stream<Map<String, List<Booking>>> _bookingsByDeviceStream(List<Device> devices) {
-    if (devices.isEmpty) return Stream.value({});
-
-    final streams = devices.map((device) =>
-        bookingService.streamBookingsByRoom(device.roomName)
-            .map((bookings) => MapEntry(device.roomName, bookings))
-    );
-
-    return CombineLatestStream.list<MapEntry<String, List<Booking>>>(streams)
-        .map((entries) {
-      final map = <String, List<Booking>>{};
-      for (var entry in entries) {
-        map[entry.key] = entry.value;
-      }
-      return map;
-    });
+  Future<Map<String, List<Booking>>> _bookingsByDeviceFuture(List<Device> devices) async {
+    final map = <String, List<Booking>>{};
+    for (var device in devices) {
+      final bookings = await bookingService.getBookingsByRoom(device.roomName);
+      map[device.roomName] = bookings;
+    }
+    return map;
   }
 }
