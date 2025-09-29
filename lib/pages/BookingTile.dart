@@ -11,14 +11,10 @@ class BookingTile extends StatefulWidget {
 }
 
 class _BookingTileState extends State<BookingTile> {
-  late Timer timer;
 
   @override
   void initState() {
     super.initState();
-    timer = Timer.periodic(Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
   }
   DateTime? parseBookingDate(String dateStr) {
     try {
@@ -47,7 +43,6 @@ class _BookingTileState extends State<BookingTile> {
 
   @override
   void dispose() {
-    timer.cancel();
     super.dispose();
   }
 

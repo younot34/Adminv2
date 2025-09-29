@@ -1,8 +1,8 @@
+import 'package:admin/pages/HistoryPage.dart';
 import 'package:flutter/material.dart';
 
 import '../pages/building_page.dart';
 import '../pages/device_page.dart';
-import '../pages/installedDevice_page.dart';
 import '../pages/mediaLibrary_page.dart';
 import '../pages/reporting_page.dart';
 import '../pages/space_resource.dart';
@@ -58,7 +58,7 @@ class Sidebar extends StatelessWidget {
                 _menuButton(context, "Media Library", Icons.perm_media),
                 _menuButton(context, "Booking", Icons.library_books_outlined),
                 _menuButton(context, "User", Icons.person),
-                // _menuButton(context, "History", Icons.schedule),
+                _menuButton(context, "History", Icons.schedule),
               ],
             ),
           ),
@@ -122,7 +122,7 @@ class Sidebar extends StatelessWidget {
           case "History":
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const InstalledDevicePage()),
+              MaterialPageRoute(builder: (_) => const HistoryPage()),
             );
             break;
         }

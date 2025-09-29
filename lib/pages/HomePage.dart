@@ -97,6 +97,38 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       });
     }
   }
+  Future<void> _deleteBooking(Booking booking) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Hapus Booking"),
+        content: Text("Apakah Anda yakin ingin menghapus booking '${booking.meetingTitle}'?"),
+        actions: [
+          TextButton(
+            child: const Text("Batal"),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("Hapus"),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await bookingService.deleteBooking(int.parse(booking.id));
+        setState(() {
+          bookings.removeWhere((b) => b.id == booking.id);
+        });
+        Fluttertoast.showToast(msg: "Booking '${booking.meetingTitle}' dihapus");
+      } catch (e) {
+        Fluttertoast.showToast(msg: "Gagal menghapus booking: $e");
+      }
+    }
+  }
 
   void _listenBookings() {
     bookings = [];
@@ -458,10 +490,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               color: Colors.grey.shade700,
                             ),
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                            tooltip: "Edit Booking",
-                            onPressed: () => _editBooking(b),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                tooltip: "Edit Booking",
+                                onPressed: () => _editBooking(b),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                tooltip: "Delete Booking",
+                                onPressed: () => _deleteBooking(b),
+                              ),
+                            ],
                           ),
                         ),
                         if (b.equipment.isNotEmpty)

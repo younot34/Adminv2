@@ -118,12 +118,7 @@ class _RoomDetailPageState extends State<RoomDetailPage> {
       scanInfo = b.scanInfo;
 
       // date
-      final partsDate = b.date.split('/');
-      selectedDate = DateTime(
-        int.parse(partsDate[2]),
-        int.parse(partsDate[1]),
-        int.parse(partsDate[0]),
-      );
+      selectedDate = DateTime.parse(b.date);
 
       // time
       final partsTime = b.time.split(':');

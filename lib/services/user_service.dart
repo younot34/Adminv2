@@ -35,7 +35,7 @@ class UserService {
 
   Future<void> deleteUser(int id) async {
     final response = await http.delete(
-      Uri.parse("http://localhost:8000/api/users/$id"),
+      Uri.parse("${ApiConfig.baseUrl}/users/$id"),
       headers: {"Content-Type": "application/json"},
     );
 

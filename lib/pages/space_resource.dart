@@ -1,3 +1,5 @@
+import 'package:admin/models/device.dart';
+import 'package:admin/services/device_service.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
@@ -163,6 +165,31 @@ class _SpaceResourcePageState extends State<SpaceResourcePage> {
                 await spaceService.createSpace(newSpace);
               } else {
                 await spaceService.updateSpace(newSpace);
+
+                // 🔥 UPDATE semua device di space ini
+                final building = buildings.firstWhere(
+                  (b) => b.id == newSpace.buildingId,
+                  orElse: () => Building(id: '', name: 'Unknown', address: ''),
+                );
+                final locationName = "${building.name} - ${newSpace.floor}";
+
+                final deviceService = DeviceService();
+                final devicesInSpace = await deviceService.getDevices();
+                final filtered = devicesInSpace.where((d) => d.location == locationName);
+
+                for (var d in filtered) {
+                  final updatedDevice = Device(
+                    id: d.id,
+                    deviceName: d.deviceName,
+                    roomName: d.roomName,
+                    location: d.location,
+                    installDate: d.installDate,
+                    isOn: d.isOn,
+                    capacity: newSpace.capacity,
+                    equipment: newSpace.equipment,
+                  );
+                  await deviceService.updateDevice(updatedDevice);
+                }
               }
 
               Navigator.pop(context);

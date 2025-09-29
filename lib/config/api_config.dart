@@ -1,6 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = "http://10.0.2.2:8000/api";
-  // emulator pakai 10.0.2.2, kalau device fisik ganti IP laptop
+  static const String baseUrl = "https://192.168.0.101:8000/api";
   static const Map<String, String> headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",

@@ -274,8 +274,8 @@ class _DevicePageState extends State<DevicePage> {
                         const SizedBox(width: 8),
                         Text(
                           device.installDate != null && device.installDate!.year > 2000
-                              ? "Installed: Belum diisi"
-                              : "Installed: ${device.installDate?.toIso8601String().split("T")[0]}",
+                              ? "Installed: ${device.installDate?.toIso8601String().split("T")[0]}"
+                              : "Installed: Belum diisi",
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],
