@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -25,17 +26,28 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> fetchHistory() async {
     final response =
-        await http.get(Uri.parse("https://a-meet.cloud/api/history"));
+        await http.get(Uri.parse("${ApiConfig.baseUrl}/history"), headers: ApiConfig.headers);
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+
+      List<dynamic> data = [];
+
+      if (decoded is List) {
+        // response langsung berupa list
+        data = decoded;
+      } else if (decoded is Map && decoded['data'] is List) {
+        // response berupa map dengan field data
+        data = decoded['data'];
+      } else {
+        // fallback: Map tunggal diubah jadi list
+        data = [decoded];
+      }
 
       for (var item in data) {
-        // Format date jadi YYYY-MM-DD
         if (item['date'] != null) {
           item['date'] = item['date'].toString().split("T")[0];
         }
-        // Ubah status jadi Finished
         item['status'] = "Finished";
       }
 
