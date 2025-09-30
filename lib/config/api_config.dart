@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = "http://192.168.0.101:8000/api";
+  static const String baseUrl = "https://a-meet.cloud/api";
   static const Map<String, String> headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",

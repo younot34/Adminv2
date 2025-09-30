@@ -26,40 +26,39 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> fetchHistory() async {
     final response =
-        await http.get(Uri.parse("${ApiConfig.baseUrl}/history"), headers: ApiConfig.headers);
+    await http.get(Uri.parse("${ApiConfig.baseUrl}/history"), headers: ApiConfig.headers);
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
 
-      List<dynamic> data = [];
+      Map<String, List<dynamic>> grouped = {};
+      List<dynamic> flatList = [];
 
-      if (decoded is List) {
-        // response langsung berupa list
-        data = decoded;
-      } else if (decoded is Map && decoded['data'] is List) {
-        // response berupa map dengan field data
-        data = decoded['data'];
-      } else {
-        // fallback: Map tunggal diubah jadi list
-        data = [decoded];
+      if (decoded is Map<String, dynamic>) {
+        decoded.forEach((roomName, meetings) {
+          if (meetings is List) {
+            final cleaned = meetings.map((item) {
+              if (item['date'] != null) {
+                item['date'] = item['date'].toString().split("T")[0];
+              }
+              return item;
+            }).toList();
+
+            grouped[roomName] = cleaned;
+            for (var m in cleaned) {
+              m['room_name'] = roomName; // simpan nama room juga
+              flatList.add(m);
+            }
+          }
+        });
       }
 
-      for (var item in data) {
-        if (item['date'] != null) {
-          item['date'] = item['date'].toString().split("T")[0];
-        }
-        item['status'] = "Finished";
-      }
-
+      if (!mounted) return;
       setState(() {
-        allHistory = data;
-        roomList = data
-            .map<String>((e) => (e['room_name'] ?? "Unknown Room").toString())
-            .toSet()
-            .toList();
+        groupedHistory = grouped;
+        allHistory = flatList; // <-- simpan semua data ke allHistory
+        roomList = grouped.keys.toList();
       });
-
-      applyFilter();
     } else {
       debugPrint("Failed to load history: ${response.statusCode}");
     }
@@ -86,7 +85,7 @@ class _HistoryPageState extends State<HistoryPage> {
       grouped.putIfAbsent(roomName, () => []);
       grouped[roomName]!.add(item);
     }
-
+    if (!mounted) return;
     setState(() {
       groupedHistory = grouped;
     });
@@ -254,9 +253,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                       subtitle: Text(
                                           "${h['date']} • ${h['time']} • Host: ${h['host_name'] ?? 'Unknown'}"),
                                       trailing: Text(
-                                        h['status'] ?? "",
+                                        (h['status'] == "In Queue") ? "Finished" : (h['status'] ?? ""),
                                         style: const TextStyle(
-                                          color: Colors.green,
+                                          color: Colors.grey,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

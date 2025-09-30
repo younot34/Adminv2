@@ -329,11 +329,6 @@ class _DevicePageState extends State<DevicePage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryGreen,
-        onPressed: () => openDeviceForm(null),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 }
